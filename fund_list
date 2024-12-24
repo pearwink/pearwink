@@ -1,0 +1,26 @@
+import requests
+import pandas as pd
+
+# กำหนด URL ของ API
+url = 'https://api.sec.or.th/FundFactsheet/fund/amc'
+
+# กำหนดคีย์ใน header ของคำขอ
+headers = {'Ocp-Apim-Subscription-Key': '0b181e9a224a4572bd91077cb223465a'}
+
+# ส่งคำขอ GET ไปยัง API
+response = requests.get(url, headers=headers)
+
+data = response.json()
+amc = pd.DataFrame(data)
+all_funds = pd.DataFrame(columns=['proj_id', 'proj_abbr_name', 'proj_name_en', 'proj_name_th', 'unique_id'])
+dfs = []
+
+for unique_id in amc.unique_id:
+    req = requests.get(f'https://api.sec.or.th/FundFactsheet/fund/amc/{unique_id}', headers=headers)
+    data_dict = req.json()
+    df = pd.json_normalize(data_dict)
+    dfs.append(df)
+
+all_funds = pd.concat(dfs, ignore_index=True)
+
+all_funds.to_excel("fund_list.xlsx", index=False)
